@@ -15,8 +15,6 @@ defmodule DiplomaWeb.Router do
 
   scope "/", DiplomaWeb do
     pipe_through :browser
-
-    get "/", PageController, :index
   end
 
   # Other scopes may use custom stacks.
