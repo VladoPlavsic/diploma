@@ -44,7 +44,9 @@ defmodule Diploma.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:telemetry, "~> 1.0"},
-      {:grpc, path: "/Users/vlado/Dev/grpc"},
+      {:grpc,
+       git: "https://github.com/VladoPlavsic/grpc.git",
+       ref: "1468172c4b5ba0630b39c166a6709a72c23a57a0"},
       {:protobuf_generate, "~> 0.1.0"}
     ]
   end
