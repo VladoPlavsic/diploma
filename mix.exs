@@ -46,8 +46,10 @@ defmodule Diploma.MixProject do
       {:telemetry, "~> 1.0"},
       {:grpc,
        git: "https://github.com/VladoPlavsic/grpc.git",
-       ref: "1468172c4b5ba0630b39c166a6709a72c23a57a0"},
-      {:protobuf_generate, "~> 0.1.0"}
+       ref: "4f3e004641c7c10885d5dbfc92d51a9bce43b86b"},
+      {:protobuf_generate, "~> 0.1.0"},
+      {:quicer, git: "https://github.com/emqx/quic.git", tag: "0.2.4"},
+      {:uuid, "~> 1.1"}
     ]
   end
 

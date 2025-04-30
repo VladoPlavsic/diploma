@@ -3,13 +3,17 @@ defmodule Diploma.Proto.SmallRequest do
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   field :name, 1, type: :string
+  field :unique_id, 2, type: :string
 end
 
 defmodule Diploma.Proto.SmallReply do
   @moduledoc false
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
-  field :message, 1, type: :string
+  field :received_at_gregorian_sec, 1, type: :int64
+  field :received_at_microsecond, 2, type: :int64
+  field :unique_id, 3, type: :string
+  field :decoded_in, 4, type: :int64
 end
 
 defmodule Diploma.Proto.MediumRequest do
@@ -99,13 +103,17 @@ defmodule Diploma.Proto.MediumRequest do
 
   field :created_at, 8, type: :int64
   field :expedited_shipping, 9, type: :bool
+  field :unique_id, 10, type: :string
 end
 
 defmodule Diploma.Proto.MediumReply do
   @moduledoc false
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
-  field :message, 1, type: :string
+  field :received_at_gregorian_sec, 1, type: :int64
+  field :received_at_microsecond, 2, type: :int64
+  field :unique_id, 3, type: :string
+  field :decoded_in, 4, type: :int64
 end
 
 defmodule Diploma.Proto.LargeRequest do
@@ -113,13 +121,17 @@ defmodule Diploma.Proto.LargeRequest do
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
   field :orders, 1, repeated: true, type: Diploma.Proto.MediumRequest
+  field :unique_id, 2, type: :string
 end
 
 defmodule Diploma.Proto.LargeReply do
   @moduledoc false
   use Protobuf, protoc_gen_elixir_version: "0.14.1", syntax: :proto3
 
-  field :message, 1, type: :string
+  field :received_at_gregorian_sec, 1, type: :int64
+  field :received_at_microsecond, 2, type: :int64
+  field :unique_id, 3, type: :string
+  field :decoded_in, 4, type: :int64
 end
 
 defmodule Diploma.Proto.Service do

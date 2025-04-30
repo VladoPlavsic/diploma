@@ -2,25 +2,25 @@ defmodule Diploma.GRPC.Client do
   use GenServer
 
   alias Diploma.Proto.MediumRequest.{
-    CreateOrderRequest,
     OrderItem,
     Address,
     PaymentMethod,
-    CreditCard,
-    Paypal,
-    BankTransfer,
     Dimensions
   }
 
+  alias Diploma.Proto.Stub
+
+  @server_ip "158.160.173.180"
+  @server_ip "127.0.0.1"
   @metadata %{measurer: Diploma.Measurer.Server}
 
-  def start_link(_opts) do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  def start_link(%{measurer: measurer}) do
+    GenServer.start_link(__MODULE__, %{measurer: measurer}, name: __MODULE__)
   end
 
-  def init(_args) do
-    {:ok, channel} = GRPC.Stub.connect("localhost:50051")
-    {:ok, %{channel: channel}}
+  def init(%{measurer: measurer}) do
+    {:ok, channel} = GRPC.Stub.connect("#{@server_ip}:50051")
+    {:ok, %{channel: channel, measurer: measurer}}
   end
 
   def call_small() do
@@ -35,32 +35,54 @@ defmodule Diploma.GRPC.Client do
     GenServer.call(__MODULE__, :call_large)
   end
 
-  def handle_call(:call_small, _from, %{channel: channel} = state) do
-    request = %Diploma.Proto.SmallRequest{}
-    {:ok, res} = Diploma.Proto.Stub.call_small(channel, request, metadata: @metadata)
+  def handle_call(:call_small, _from, %{channel: channel, measurer: measurer} = state) do
+    request = generate_small_request()
+    GenServer.cast(measurer, {:grpc_sent_at, DateTime.utc_now(:microsecond), request.unique_id})
+    {:ok, %{unique_id: uid} = res} = Stub.call_small(channel, request, metadata: @metadata)
+    GenServer.cast(measurer, {:grpc_response, decode_time_from_res(res), res.decoded_in, uid})
 
     {:reply, res, state}
   end
 
-  def handle_call(:call_medium, _from, %{channel: channel} = state) do
+  def handle_call(:call_medium, _from, %{channel: channel, measurer: measurer} = state) do
     request = generate_medium_request()
-    {:ok, res} = Diploma.Proto.Stub.call_medium(channel, request, metadata: @metadata)
+    GenServer.cast(measurer, {:grpc_sent_at, DateTime.utc_now(:microsecond), request.unique_id})
+    {:ok, %{unique_id: uid} = res} = Stub.call_medium(channel, request, metadata: @metadata)
+    GenServer.cast(measurer, {:grpc_response, decode_time_from_res(res), res.decoded_in, uid})
 
     {:reply, res, state}
   end
 
-  def handle_call(:call_large, _from, %{channel: channel} = state) do
-    request = %Diploma.Proto.LargeRequest{
+  def handle_call(:call_large, _from, %{channel: channel, measurer: measurer} = state) do
+    request = generate_large_request()
+    GenServer.cast(measurer, {:grpc_sent_at, DateTime.utc_now(:microsecond), request.unique_id})
+    {:ok, %{unique_id: uid} = res} = Stub.call_large(channel, request, metadata: @metadata)
+    GenServer.cast(measurer, {:grpc_response, decode_time_from_res(res), res.decoded_in, uid})
+
+    {:reply, res, state}
+  end
+
+  def decode_time_from_res(res) do
+    DateTime.from_gregorian_seconds(
+      res.received_at_gregorian_sec,
+      {res.received_at_microsecond, 6}
+    )
+  end
+
+  def generate_small_request do
+    %Diploma.Proto.SmallRequest{unique_id: UUID.uuid1()}
+  end
+
+  def generate_large_request do
+    %Diploma.Proto.LargeRequest{
+      unique_id: UUID.uuid1(),
       orders: Enum.map(1..100, fn _ -> generate_medium_request() end)
     }
-
-    {:ok, res} = Diploma.Proto.Stub.call_large(channel, request, metadata: @metadata)
-
-    {:reply, res, state}
   end
 
-  defp generate_medium_request do
+  def generate_medium_request do
     %Diploma.Proto.MediumRequest{
+      unique_id: UUID.uuid1(),
       order_id: "ORD-20250426-XYZ#{generate_random_integer()}",
       customer_id: "CUST-12345#{generate_random_integer()}",
       items: generate_order_items(50),
